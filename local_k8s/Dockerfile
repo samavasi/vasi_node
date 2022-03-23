@@ -25,3 +25,10 @@ RUN curl -LO "https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz" && \
     mv linux-amd64/helm /usr/bin
 
 USER jenkins
+
+#Install some helm/k8s test/security tools
+RUN helm plugin install https://github.com/instrumenta/helm-kubeval
+
+RUN sudo apt update -y && \
+    sudo apt install -y python3 python3-pip && \
+    sudo pip install checkov
