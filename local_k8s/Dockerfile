@@ -13,4 +13,15 @@ RUN apt-get update \
       && rm -rf /var/lib/apt/lists/*
 RUN echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
 
+WORKDIR /tmp
+
+RUN curl -LO "https://dl.k8s.io/release/v1.20.15/bin/linux/amd64/kubectl" && \
+    chmod 777 kubectl && \
+    mv kubectl /usr/bin
+
+RUN curl -LO "https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz" && \
+    tar -zxvf helm-v3.8.1-linux-amd64.tar.gz && \
+    chmod 777 linux-amd64/helm && \
+    mv linux-amd64/helm /usr/bin
+
 USER jenkins
