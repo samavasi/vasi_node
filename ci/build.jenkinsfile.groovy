@@ -27,19 +27,29 @@ pipeline {
                 stage('Run Kubeval for application chart manifests') {
                     agent any
                     steps {
-                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15"
+                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15 || true" //TODO fix Failed initalizing schema https://kubernetesjsonschema.dev
                     }
                 }
                 stage('Run Checkov scan for application chart manifests') {
                     agent any
                     steps {
-                        sh "checkov --directory ./xendit-demo-nodejs —-framework helm || true"
+                        sh "checkov --directory ./xendit-demo-nodejs --framework helm --hard-fail-on CRITICAL --output junitxml --output-file-path ${env.WORKSPACE}/checkov_helm.xml"
+                    }
+                    post {
+                        always {
+                            junit "${env.WORKSPACE}/checkov_helm.xml"
+                        }
                     }
                 }
                 stage('Run Checkov scan against application Dockerfile') {
                     agent any
                     steps {
-                        sh "checkov --file Dockerfile --framework dockerfile || true"
+                        sh "checkov --file Dockerfile --framework dockerfile --hard-fail-on CRITICAL --output junitxml --output-file-path ${env.WORKSPACE}/checkov_docker.xml"
+                    }
+                    post {
+                        always {
+                            junit "${env.WORKSPACE}/checkov_docker.xml"
+                        }
                     }
                 }
             }
