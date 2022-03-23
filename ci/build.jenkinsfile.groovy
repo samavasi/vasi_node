@@ -27,7 +27,7 @@ pipeline {
                 stage('Run Kubeval for application chart manifests') {
                     agent any
                     steps {
-                        sh "helm kubeval ./xendit-demo-nodejs"
+                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15"
                     }
                 }
                 stage('Run Checkov scan for application chart manifests') {
