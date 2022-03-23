@@ -33,7 +33,7 @@ pipeline {
                 stage('Run Checkov scan for application chart manifests') {
                     agent any
                     steps {
-                        sh "checkov --directory ./xendit-demo-nodejs --framework helm --hard-fail-on CRITICAL --output junitxml --output-file-path ${env.WORKSPACE}/checkov_helm.xml"
+                        sh "checkov --directory ./xendit-demo-nodejs --framework helm --hard-fail-on CRITICAL --output junitxml > ${env.WORKSPACE}/checkov_helm.xml"
                     }
                     post {
                         always {
@@ -44,7 +44,7 @@ pipeline {
                 stage('Run Checkov scan against application Dockerfile') {
                     agent any
                     steps {
-                        sh "checkov --file Dockerfile --framework dockerfile --hard-fail-on CRITICAL --output junitxml --output-file-path ${env.WORKSPACE}/checkov_docker.xml"
+                        sh "checkov --file Dockerfile --framework dockerfile --hard-fail-on CRITICAL --output junitxml > ${env.WORKSPACE}/checkov_docker.xml"
                     }
                     post {
                         always {
