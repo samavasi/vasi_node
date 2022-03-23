@@ -55,12 +55,12 @@ pipeline {
             agent any
             when { changeRequest() }
             steps {
-                sh "helm upgrade --namespace myapp --create-namespace --install smokedeploy-xendit-demo-${env.PR} --wait ./xendit-demo-nodejs -f ./xendit-demo-nodejs/values.yaml"
-                sh "helm test smokedeploy-xendit-demo-${env.PR}"
+                sh "helm upgrade --namespace myapp --create-namespace --install smokedeploy-xendit-demo-${env.CHANGE_ID} --wait ./xendit-demo-nodejs -f ./xendit-demo-nodejs/values.yaml"
+                sh "helm test smokedeploy-xendit-demo-${env.CHANGE_ID}"
             }
             post {
                 always {
-                    sh "helm uninstall smokedeploy-xendit-demo-${env.PR}"
+                    sh "helm uninstall smokedeploy-xendit-demo-${env.CHANGE_ID}"
                 }
             }
         }
