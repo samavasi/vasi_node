@@ -4,6 +4,9 @@ pipeline {
         // Add a global timeout to make sure we dont get builds hanging forever
         timeout(time: 2, unit: 'HOURS')
     }
+    parameters {
+        booleanParam(name: 'deployToDev', defaultValue: false, description: 'Set to true to auto deploy successfully built version to dev')
+    }
     stages {
         stage('Build application image') {
             agent any
@@ -30,13 +33,13 @@ pipeline {
                 stage('Run Checkov scan for application chart manifests') {
                     agent any
                     steps {
-                        sh "checkov --directory ./xendit-demo-nodejs —framework helm"
+                        sh "checkov --directory ./xendit-demo-nodejs —-framework helm"
                     }
                 }
                 stage('Run Checkov scan against application Dockerfile') {
                     agent any
                     steps {
-                        sh "checkov --file Dockerfile"
+                        sh "checkov --file Dockerfile --framework dockerfile"
                     }
                 }
             }
@@ -61,14 +64,11 @@ pipeline {
                 }
             }
         }
-        // stage('Deploy to dev') {
-        //     input {
-        //         message "Deploy to dev?"
-        //         ok "Deploy"
-        //     }
-        //     steps {
-        //         echo "Hello, ${PERSON}, nice to meet you."
-        //     }
-        // }
+        stage('Deploy to dev') {
+            when { params.deployToDev }
+            steps {
+                echo "Deploying"
+            }
+        }
     }
 }
