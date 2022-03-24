@@ -10,7 +10,6 @@ pipeline {
     stages {
         stage('Build application image') {
             agent any
-            //TODO get/set version (commitSha + semver?)
             steps {
                 sh 'sudo docker build -t localhost:5001/xendit-demo-nodejs .'
             }
@@ -27,28 +26,58 @@ pipeline {
                 stage('Run Kubeval for application chart manifests') {
                     agent any
                     steps {
-                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15 || true" //TODO fix Failed initalizing schema https://kubernetesjsonschema.dev
+                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15 --strict --schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
+                    }
+                }
+                stage('Dry-run application Chart') {
+                    agent any
+                    steps {
+                        sh "helm install xendit-demo-dev --debug --dry-run ./xendit-demo-nodejs"
                     }
                 }
                 stage('Run Checkov scan for application chart manifests') {
                     agent any
                     steps {
-                        sh "checkov --directory ./xendit-demo-nodejs --framework helm --hard-fail-on CRITICAL --output junitxml > ${env.WORKSPACE}/checkov_helm.xml"
+                        sh """#!/bin/bash
+set -o pipefail
+checkov \
+--directory ./xendit-demo-nodejs \
+--framework helm \
+--hard-fail-on CRITICAL \
+--output junitxml | tee ${env.WORKSPACE}/checkov_helm.xml
+"""
                     }
                     post {
                         always {
-                            junit "${env.WORKSPACE}/checkov_helm.xml"
+                            sh "ls -la ${env.WORKSPACE}"
+                            junit(
+                                allowEmptyResults: true,
+                                skipMarkingBuildUnstable: true,
+                                testResults: "${env.WORKSPACE}/checkov_helm.xml"
+                            )
                         }
                     }
                 }
                 stage('Run Checkov scan against application Dockerfile') {
                     agent any
                     steps {
-                        sh "checkov --file Dockerfile --framework dockerfile --hard-fail-on CRITICAL --output junitxml > ${env.WORKSPACE}/checkov_docker.xml"
+                        sh """#!/bin/bash
+set -o pipefail
+checkov \
+--file Dockerfile \
+--framework dockerfile \
+--hard-fail-on CRITICAL \
+--output junitxml | tee ${env.WORKSPACE}/checkov_docker.xml
+"""
                     }
                     post {
                         always {
-                            junit "${env.WORKSPACE}/checkov_docker.xml"
+                            sh "ls -la ${env.WORKSPACE}"
+                            junit(
+                                allowEmptyResults: true,
+                                skipMarkingBuildUnstable: true,
+                                testResults: "${env.WORKSPACE}/checkov_docker.xml"
+                            )
                         }
                     }
                 }

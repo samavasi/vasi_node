@@ -1,7 +1,7 @@
 # start custom jenkins image (plugins and some settings are already in stored in mounted docker volume)
 # https://www.jenkins.io/doc/book/installing/docker/
 # https://blog.container-solutions.com/running-docker-in-jenkins-in-docker
-docker build -t jenkins-docker .
+# docker build -t jenkins-docker .
 
 docker run -p 8080:8080 \
     -p 50000:50000 \
