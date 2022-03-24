@@ -121,11 +121,11 @@ helm upgrade \
                 }
             }
         }
-        // stage('Deploy to dev') {
-        //     when { expression { return params.deployToDev } }
-        //     steps {
-        //         build "Deploying"
-        //     }
-        // }
+        stage('Deploy to dev') {
+            when { expression { return params.deployToDev } }
+            steps {
+                build job: '../../deploy_nodeapp', parameters: [[$class: 'StringParameterValue', name: 'VERSION', value: "${env.APP_VERSION}"]]
+            }
+        }
     }
 }
