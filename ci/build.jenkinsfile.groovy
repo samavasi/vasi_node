@@ -7,11 +7,22 @@ pipeline {
     parameters {
         booleanParam(name: 'deployToDev', defaultValue: false, description: 'Set to true to auto deploy successfully built version to dev')
     }
+    // We set the env after we assign an executor so cannot use declarative step for environment GIT_COMMIT_SHORT
+    // environment {
+        // GIT_COMMIT_SHORT = ""
+    // }
     stages {
         stage('Build application image') {
             agent any
             steps {
-                sh 'sudo docker build -t localhost:5001/xendit-demo-nodejs .'
+                script {
+                    env.APP_VERSION = env.BRANCH_NAME.split('/')[-1]
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "printf \$(git rev-parse --short ${GIT_COMMIT})",
+                        returnStdout: true
+                    )
+                }
+                sh "sudo docker build -t localhost:5001/xendit-demo-nodejs:${env.APP_VERSION}-${env.GIT_COMMIT_SHORT} ."
             }
         }
         stage('Tests/validations') {
@@ -32,7 +43,7 @@ pipeline {
                 stage('Dry-run application Chart') {
                     agent any
                     steps {
-                        sh "helm install xendit-demo-dev --debug --dry-run ./xendit-demo-nodejs"
+                        sh "helm install xendit-demo-dev --debug --dry-run --set appVersion=${env.APP_VERSION}-${env.GIT_COMMIT_SHORT} ./xendit-demo-nodejs"
                     }
                 }
                 stage('Run Checkov scan for application chart manifests') {
@@ -53,7 +64,7 @@ checkov \
                             junit(
                                 allowEmptyResults: true,
                                 skipMarkingBuildUnstable: true,
-                                testResults: "${env.WORKSPACE}/checkov_helm.xml"
+                                testResults: '*helm.xml'
                             )
                         }
                     }
@@ -76,7 +87,7 @@ checkov \
                             junit(
                                 allowEmptyResults: true,
                                 skipMarkingBuildUnstable: true,
-                                testResults: "${env.WORKSPACE}/checkov_docker.xml"
+                                testResults: '*docker.xml'
                             )
                         }
                     }
@@ -87,14 +98,21 @@ checkov \
             agent any
             steps {
                 // NOTE: we only have 1 node so no need to try to build again here for simplicity just pushing
-                sh 'sudo docker push localhost:5001/xendit-demo-nodejs'
+                sh "sudo docker push localhost:5001/xendit-demo-nodejs:${env.APP_VERSION}-${env.GIT_COMMIT_SHORT}"
             }
         }
         stage('Smoke deploy/test helm chart') {
             agent any
             when { changeRequest() }
             steps {
-                sh "helm upgrade --namespace myapp --create-namespace --install smokedeploy-xendit-demo-${env.CHANGE_ID} --wait ./xendit-demo-nodejs -f ./xendit-demo-nodejs/values.yaml"
+                sh """
+helm upgrade \
+--namespace myapp \
+--create-namespace \
+--install smokedeploy-xendit-demo-${env.CHANGE_ID} \
+--wait \
+./xendit-demo-nodejs -f ./xendit-demo-nodejs/values.yaml
+"""
                 sh "helm test smokedeploy-xendit-demo-${env.CHANGE_ID}"
             }
             post {
@@ -103,11 +121,11 @@ checkov \
                 }
             }
         }
-        stage('Deploy to dev') {
-            when { expression { return params.deployToDev } }
-            steps {
-                echo "Deploying"
-            }
-        }
+        // stage('Deploy to dev') {
+        //     when { expression { return params.deployToDev } }
+        //     steps {
+        //         build "Deploying"
+        //     }
+        // }
     }
 }
