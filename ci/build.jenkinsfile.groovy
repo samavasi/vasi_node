@@ -1,6 +1,7 @@
 pipeline {
     agent none
     options {
+        skipDefaultCheckout()
         // Add a global timeout to make sure we dont get builds hanging forever
         timeout(time: 2, unit: 'HOURS')
     }
@@ -11,15 +12,16 @@ pipeline {
     // environment {
         // GIT_COMMIT_SHORT = ""
     // }
-    // TODO stash code and unstash for relevant stages
     stages {
         stage('Build application image') {
             agent any
             steps {
+                checkout scm
+                stash name: 'repoCode'
                 script {
                     env.APP_VERSION = env.BRANCH_NAME.split('/')[-1]
                     env.GIT_COMMIT_SHORT = sh(
-                        script: "printf \$(git rev-parse --short ${GIT_COMMIT})",
+                        script: "printf \$(git rev-parse --short HEAD)",
                         returnStdout: true
                     )
                 }
@@ -32,12 +34,14 @@ pipeline {
                 stage('Helm Lint application chart') {
                     agent any
                     steps {
+                        unstash 'repoCode'
                         sh "helm lint --strict ./xendit-demo-nodejs"
                     }
                 }
                 stage('Run Kubeval for application chart manifests') {
                     agent any
                     steps {
+                        unstash 'repoCode'
                         sh """
 helm kubeval \
 ./xendit-demo-nodejs \
@@ -50,6 +54,7 @@ helm kubeval \
                 stage('Dry-run application Chart') {
                     agent any
                     steps {
+                        unstash 'repoCode'
                         sh """
 helm install xendit-demo-dev \
 --namespace myapp \
@@ -64,6 +69,7 @@ helm install xendit-demo-dev \
                 stage('Run Checkov scan for application chart manifests') {
                     agent any
                     steps {
+                        unstash 'repoCode'
                         sh """#!/bin/bash
 set -o pipefail
 checkov \
@@ -87,6 +93,7 @@ checkov \
                 stage('Run Checkov scan against application Dockerfile') {
                     agent any
                     steps {
+                        unstash 'repoCode'
                         sh """#!/bin/bash
 set -o pipefail
 checkov \
@@ -120,6 +127,7 @@ checkov \
             agent any
             when { changeRequest() }
             steps {
+                unstash 'repoCode'
                 sh """
 helm upgrade \
 --namespace myapp \
