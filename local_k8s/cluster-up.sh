@@ -58,3 +58,4 @@ helm upgrade --namespace monitor --create-namespace --install kibana --wait ./mo
 helm upgrade --namespace monitor --create-namespace --install filebeat --wait ./monitor_logging_charts/filebeat -f ./monitor_logging_charts/filebeat/values.yaml
 # Deploy monitoring stack in k8s cluster
 helm upgrade --namespace monitor --create-namespace --install promstack --wait ./monitor_logging_charts/kube-prometheus-stack -f ./monitor_logging_charts/kube-prometheus-stack/values.yaml
+helm upgrade --namespace monitor --create-namespace --install blackbox-exp --wait ./monitor_logging_charts/prometheus-blackbox-exporter -f ./monitor_logging_charts/prometheus-blackbox-exporter/values.yaml
