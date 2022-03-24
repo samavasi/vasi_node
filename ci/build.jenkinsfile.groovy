@@ -11,6 +11,7 @@ pipeline {
     // environment {
         // GIT_COMMIT_SHORT = ""
     // }
+    // TODO stash code and unstash for relevant stages
     stages {
         stage('Build application image') {
             agent any
@@ -37,13 +38,27 @@ pipeline {
                 stage('Run Kubeval for application chart manifests') {
                     agent any
                     steps {
-                        sh "helm kubeval ./xendit-demo-nodejs -v 1.20.15 --strict --schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
+                        sh """
+helm kubeval \
+./xendit-demo-nodejs \
+-v 1.20.15 \
+--strict \
+--schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master
+"""
                     }
                 }
                 stage('Dry-run application Chart') {
                     agent any
                     steps {
-                        sh "helm install xendit-demo-dev --debug --dry-run --set appVersion=${env.APP_VERSION}-${env.GIT_COMMIT_SHORT} ./xendit-demo-nodejs"
+                        sh """
+helm install xendit-demo-dev \
+--namespace myapp \
+--debug \
+--dry-run \
+./xendit-demo-nodejs \
+-f ./xendit-demo-nodejs/values.yaml \
+--set image.tag=${env.APP_VERSION}-${env.GIT_COMMIT_SHORT}
+"""
                     }
                 }
                 stage('Run Checkov scan for application chart manifests') {
@@ -111,20 +126,25 @@ helm upgrade \
 --create-namespace \
 --install smokedeploy-xendit-demo-${env.CHANGE_ID} \
 --wait \
-./xendit-demo-nodejs -f ./xendit-demo-nodejs/values.yaml
+./xendit-demo-nodejs \
+-f ./xendit-demo-nodejs/values.yaml \
+--set image.tag=${env.APP_VERSION}-${env.GIT_COMMIT_SHORT} \
+--set ingress.hosts[0].host=xendit-demo-nodejs-${env.CHANGE_ID}.local
 """
-                sh "helm test smokedeploy-xendit-demo-${env.CHANGE_ID}"
+                sh "helm test --namespace myapp smokedeploy-xendit-demo-${env.CHANGE_ID}"
             }
             post {
                 always {
-                    sh "helm uninstall smokedeploy-xendit-demo-${env.CHANGE_ID}"
+                    sh "helm uninstall --namespace myapp smokedeploy-xendit-demo-${env.CHANGE_ID}"
                 }
             }
         }
         stage('Deploy to dev') {
             when { expression { return params.deployToDev } }
             steps {
-                build job: '../../deploy_nodeapp', parameters: [[$class: 'StringParameterValue', name: 'VERSION', value: "${env.APP_VERSION}"]]
+                build job: 'deploy_nodeapp', wait: true, propagate: true, parameters: [
+                    string(name: 'VERSION', value: "${env.APP_VERSION}")
+                ]
             }
         }
     }
