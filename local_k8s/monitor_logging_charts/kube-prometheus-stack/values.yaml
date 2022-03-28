@@ -171,7 +171,7 @@ alertmanager:
           alertname: Watchdog
         receiver: 'null'
       - match:
-          alertname: 'AppDown'
+          alertname: AppDown
         receiver: 'null'
 
     receivers:
@@ -2256,9 +2256,12 @@ prometheus:
     ## See https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#namespaceselector for usage
     ##
     ruleNamespaceSelector:
-      matchLabels:
-        name: myapp
-
+      matchExpressions:
+        - key: name
+          operator: In
+          values:
+            - myapp
+            - monitor
 
     ## If true, a nil or {} value for prometheus.prometheusSpec.ruleSelector will cause the
     ## prometheus resource to be created with selectors based on values in the helm deployment,
