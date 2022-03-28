@@ -214,7 +214,7 @@ alertmanager:
   #       {{ end }}
 
   ingress:
-    enabled: false
+    enabled: true
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
@@ -226,8 +226,8 @@ alertmanager:
 
     ## Hosts must be provided if Ingress is enabled.
     ##
-    hosts: []
-      # - alertmanager.domain.com
+    hosts:
+      - alertmanager-example.local
 
     ## Paths to use for ingress rules - one path should match the alertmanagerSpec.routePrefix
     ##
@@ -1983,7 +1983,7 @@ prometheus:
   #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
 
   ingress:
-    enabled: false
+    enabled: true
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
@@ -1995,9 +1995,9 @@ prometheus:
     ## Hostnames.
     ## Must be provided if Ingress is enabled.
     ##
-    # hosts:
-    #   - prometheus.domain.com
-    hosts: []
+    hosts:
+      - prometheus-example.local
+    # hosts: []
 
     ## Paths to use for ingress rules - one path should match the prometheusSpec.routePrefix
     ##
@@ -2470,8 +2470,8 @@ prometheus:
         static_configs:
           # Add URLs as target parameter
           - targets:
-            - http://xendit-demo-dev-xendit-demo-nodejs.myapp:8080
-            # - http://xendit-demo-nodejs.local #NOTE: not reachable due to ingress on kind+MacOS would need additional tweaking
+            - http://xendit-demo-dev-xendit-demo-nodejs.myapp:8080/health
+            # - http://xendit-demo-nodejs.local/health #NOTE: not reachable due to ingress on kind+MacOS would need additional tweaking
         relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -2480,7 +2480,7 @@ prometheus:
           target_label: target
           # Ensure blackbox-exporter is reachable from Prometheus
         - target_label: __address__
-          replacement: prometheus-blackbox-exporter.monitoring:9115
+          replacement: blackbox-exp-prometheus-blackbox-exporter:9115
 
     # - job_name: kube-etcd
     #   kubernetes_sd_configs:
