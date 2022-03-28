@@ -25,6 +25,8 @@ pipeline {
         stage('Deploy xendit-demo-nodejs to dev') {
             steps {
                 sh """
+helm repo add bitnami https://charts.bitnami.com/bitnami &&
+helm dependency build ./xendit-demo-nodejs &&
 helm upgrade \
 --namespace myapp \
 --create-namespace \
