@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: promstack-kube-prometheus-prometheus
+    role: alert-rules
+  name: "xendit-app-{{ .Release.Name }}"
+spec:
+  groups:
+  - name: "xendit-app-{{ .Release.Name }}.rules"
+    rules:
+    - alert: AppDown
+      for: 20s
+      expr: probe_success{target="http://{{ .Release.Name }}-xendit-demo-nodejs.myapp:8080/health"} == 0
+      annotations:
+        message: The nodejs application under release {{ .Release.Name }} seems down.
