@@ -43,11 +43,14 @@ pipeline {
                     steps {
                         unstash 'repoCode'
                         sh """
+helm repo add bitnami https://charts.bitnami.com/bitnami &&
+helm dependency build ./xendit-demo-nodejs &&
 helm kubeval \
 ./xendit-demo-nodejs \
 -v 1.20.15 \
 --strict \
---schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master
+--schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master \
+--skip-kinds PrometheusRule
 """
                     }
                 }
@@ -56,6 +59,8 @@ helm kubeval \
                     steps {
                         unstash 'repoCode'
                         sh """
+helm repo add bitnami https://charts.bitnami.com/bitnami &&
+helm dependency build ./xendit-demo-nodejs &&
 helm install xendit-demo-dev \
 --namespace myapp \
 --debug \
@@ -129,6 +134,8 @@ checkov \
             steps {
                 unstash 'repoCode'
                 sh """
+helm repo add bitnami https://charts.bitnami.com/bitnami &&
+helm dependency build ./xendit-demo-nodejs &&
 helm upgrade \
 --namespace myapp \
 --create-namespace \
