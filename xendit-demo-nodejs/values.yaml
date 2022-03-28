@@ -75,8 +75,30 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+probes:
+  livenessProbe:
+    httpPath: "/health"
+  readinessProbe:
+    httpPath: "/health"
+
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
+
+#MongoDb values
+#https://github.com/bitnami/charts/tree/master/bitnami/mongodb
+mongodb:
+  enabled: true
+  architecture: "standalone"
+  auth:
+    enabled: true
+    rootUser: 'root'
+    rootPassword: 'dummy12345'
+    usernames:
+      - "xendit"
+    passwords:
+      - "xendit123"
+    databases:
+      - "xendit"

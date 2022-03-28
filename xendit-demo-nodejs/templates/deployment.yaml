@@ -37,13 +37,16 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          env:
+            - name: DB_CONNECT_URL
+              value: "mongodb://{{ .Values.mongodb.auth.rootUser }}:{{ .Values.mongodb.auth.rootPassword }}@{{ .Release.Name }}-mongodb:27017"
           livenessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.probes.livenessProbe.httpPath }}
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.probes.readinessProbe.httpPath }}
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
