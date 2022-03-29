@@ -180,7 +180,7 @@ alertmanager:
       slack_configs:
       - channel: '#alerttest'
         send_resolved: true
-        api_url: "https://hooks.slack.com/services/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"
+        api_url: "https://hooks.slack.com/services/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"
     templates:
     - '/etc/alertmanager/config/*.tmpl'
 
