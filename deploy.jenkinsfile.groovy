@@ -8,6 +8,10 @@ pipeline {
     stages {
         stage("Checkout release branch version") {
             steps {
+                // To ensure only relevant files are included during checkout
+                // also due to https://github.com/helm/helm/issues/2936
+                // `an update command will not remove charts unless they are (a) present in the Chart.yaml file, but (b) at the wrong version`
+                deleteDir()
                 checkout([$class: 'GitSCM',
                       		branches: [['name': "refs/heads/release/${VERSION}"]],
               						extensions: scm.extensions,
